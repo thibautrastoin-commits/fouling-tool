@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -223,27 +223,27 @@
   <header>
     <div class="tag">Hull performance</div>
     <h1>Biofouling estimator</h1>
-    <p>Estimation de l'état de coque selon les conditions d'arrêt — basé sur Uzun et al. 2019, Demirel et al. 2019, ISO 19030</p>
+    <p>Hull condition estimate based on layup conditions — based on Uzun et al. 2019, Demirel et al. 2019, ISO 19030</p>
   </header>
 
   <div class="card">
-    <p class="card-title">Paramètres d'entrée</p>
+    <p class="card-title">Input parameters</p>
     <div class="sliders">
 
       <div class="slider-row">
         <div class="slider-head">
-          <span class="slider-label">Durée d'arrêt</span>
-          <span class="slider-value" id="val-days">30<span class="slider-unit"> jours</span></span>
+          <span class="slider-label">Layup duration</span>
+          <span class="slider-value" id="val-days">30<span class="slider-unit"> days</span></span>
         </div>
         <input type="range" id="sl-days" min="1" max="180" step="1" value="30">
-        <span class="slider-sub">0 nœuds — colonisation maximale au-delà de 3 jours</span>
+        <span class="slider-sub">0 knots — maximum colonisation beyond 3 days</span>
       </div>
 
       <div class="divider"></div>
 
       <div class="slider-row">
         <div class="slider-head">
-          <span class="slider-label">Température de l'eau</span>
+          <span class="slider-label">Water temperature</span>
           <span class="slider-value" id="val-temp">29<span class="slider-unit"> °C</span></span>
         </div>
         <input type="range" id="sl-temp" min="5" max="36" step="0.5" value="29">
@@ -254,29 +254,29 @@
 
       <div class="slider-row">
         <div class="slider-head">
-          <span class="slider-label">Salinité</span>
+          <span class="slider-label">Salinity</span>
           <span class="slider-value" id="val-sal">35<span class="slider-unit"> ‰</span></span>
         </div>
         <input type="range" id="sl-sal" min="10" max="42" step="0.5" value="35">
-        <span class="slider-sub" id="sub-sal">Océan mondial moyen — 35‰</span>
+        <span class="slider-sub" id="sub-sal">World ocean average — 35‰</span>
       </div>
 
       <div class="divider"></div>
 
       <div class="slider-row">
         <div class="slider-head">
-          <span class="slider-label">Antifouling</span>
+          <span class="slider-label">Antifouling coating</span>
           <span class="slider-value" id="val-af">50<span class="slider-unit"> %</span></span>
         </div>
         <input type="range" id="sl-af" min="0" max="100" step="5" value="50">
-        <span class="slider-sub" id="sub-af">Efficacité résiduelle estimée (100% = neuf, 0% = épuisé)</span>
+        <span class="slider-sub" id="sub-af">Estimated residual efficiency (100% = new, 0% = exhausted)</span>
       </div>
 
     </div>
   </div>
 
   <div class="card">
-    <p class="card-title">Résultats estimés</p>
+    <p class="card-title">Estimated results</p>
 
     <div class="metrics">
       <div class="metric">
@@ -284,11 +284,11 @@
         <div class="metric-value" id="res-fr">–</div>
       </div>
       <div class="metric">
-        <div class="metric-label">Résistance +</div>
+        <div class="metric-label">Drag increase</div>
         <div class="metric-value" id="res-drag">–<span class="metric-unit">%</span></div>
       </div>
       <div class="metric">
-        <div class="metric-label">Puissance +</div>
+        <div class="metric-label">Power increase</div>
         <div class="metric-value" id="res-power">–<span class="metric-unit">%</span></div>
       </div>
     </div>
@@ -307,9 +307,9 @@
   </div>
 
   <div class="card">
-    <p class="card-title">Chronologie de colonisation</p>
+    <p class="card-title">Colonisation timeline</p>
     <div class="timeline" id="timeline"></div>
-    <p class="note">Sources : Uzun et al. OE 2019 — Time-dependent biofouling growth model · Demirel et al. OE 2019 — Practical added resistance diagrams · ISO 19030 · IMO Biofouling Report. Modèle empirique — à croiser avec inspection visuelle réelle.</p>
+    <p class="note">Sources: Uzun et al. OE 2019 — Time-dependent biofouling growth model · Demirel et al. OE 2019 — Practical added resistance diagrams · ISO 19030 · IMO Biofouling Report. Empirical model — to be cross-checked with actual visual inspection.</p>
   </div>
 </div>
 
@@ -319,11 +319,11 @@ const $ = id => document.getElementById(id);
 const slDays = $('sl-days'), slTemp = $('sl-temp'), slSal = $('sl-sal'), slAf = $('sl-af');
 
 const FR_DATA = [
-  { fr: 0, label: 'FR 0 — Coque propre',       desc: 'Aucune colonisation visible. Performance nominale.',                          color: '#1d9e75', dot: '#1d9e75', icon: '🟢', dragMin: 0,  dragMax: 2  },
-  { fr: 1, label: 'FR 1 — Slime léger',         desc: 'Film biochimique + premières bactéries. Quasi invisible.',                   color: '#0f6e56', dot: '#5dcaa5', icon: '🟡', dragMin: 5,  dragMax: 15 },
-  { fr: 2, label: 'FR 2 — Slime établi',        desc: 'Biofilm dense, diatomées, algues microscopiques. Rugosité augmentée.',       color: '#854f0b', dot: '#ef9f27', icon: '🟠', dragMin: 15, dragMax: 25 },
-  { fr: 3, label: 'FR 3 — Macrofouling précoce',desc: 'Algues filamenteuses, larves de balanes. Nettoyage subaquatique requis.',    color: '#993c1d', dot: '#f0997b', icon: '🔴', dragMin: 25, dragMax: 45 },
-  { fr: 4, label: 'FR 4 — Macrofouling établi', desc: 'Balanes, moules, vers. Cale sèche probablement nécessaire.',                color: '#a32d2d', dot: '#e24b4a', icon: '🔴', dragMin: 45, dragMax: 80 },
+  { fr: 0, label: 'FR 0 — Clean hull',       desc: 'No visible colonisation. Nominal performance.',                          color: '#1d9e75', dot: '#1d9e75', icon: '🟢', dragMin: 0,  dragMax: 2  },
+  { fr: 1, label: 'FR 1 — Light slime',         desc: 'Biochemical film + first bacteria. Nearly invisible.',                   color: '#0f6e56', dot: '#5dcaa5', icon: '🟡', dragMin: 5,  dragMax: 15 },
+  { fr: 2, label: 'FR 2 — Established slime',        desc: 'Dense biofilm, diatoms, micro-algae. Increased roughness.',       color: '#854f0b', dot: '#ef9f27', icon: '🟠', dragMin: 15, dragMax: 25 },
+  { fr: 3, label: 'FR 3 — Early macrofouling',desc: 'Filamentous algae, barnacle larvae. Underwater cleaning required.',    color: '#993c1d', dot: '#f0997b', icon: '🔴', dragMin: 25, dragMax: 45 },
+  { fr: 4, label: 'FR 4 — Established macrofouling', desc: 'Barnacles, mussels, worms. Drydock likely required.',                color: '#a32d2d', dot: '#e24b4a', icon: '🔴', dragMin: 45, dragMax: 80 },
 ];
 
 let myChart = null;
@@ -381,12 +381,12 @@ function getTimelineEvents(days, temp, sal, af) {
   const currentFR = dragToFR(currentDrag);
 
   const stages = [
-    { dragThreshold: 0,  fr: 0, name: 'Film biochimique',     detail: 'Adsorption de proteines et polysaccharides. Irreversible des H+2.', dot: '#1d9e75' },
-    { dragThreshold: 1,  fr: 1, name: 'Biofilm bacterien',    detail: 'Colonisation bacterienne. Slime jaunatre naissant.', dot: '#5dcaa5' },
-    { dragThreshold: 5,  fr: 1, name: 'Slime etabli',         detail: 'Diatomees et microalgues. +8-15% resistance.', dot: '#ef9f27' },
-    { dragThreshold: 12, fr: 2, name: 'Macrofouling precoce', detail: 'Larves de balanes et algues filamenteuses. +20-30%.', dot: '#f0997b' },
-    { dragThreshold: 22, fr: 3, name: 'Balanes naissantes',   detail: 'Macrofouling etabli. Nettoyage obligatoire. +40-60%.', dot: '#e24b4a' },
-    { dragThreshold: 40, fr: 4, name: 'Macrofouling dense',   detail: 'Moules, vers tubicoles. Cale seche recommandee. +60-80%.', dot: '#a32d2d' },
+    { dragThreshold: 0,  fr: 0, name: 'Biochemical film',     detail: 'Protein and polysaccharide adsorption. Irreversible from H+2.', dot: '#1d9e75' },
+    { dragThreshold: 1,  fr: 1, name: 'Bacterial biofilm',    detail: 'Bacterial colonisation. Nascent yellowish slime.', dot: '#5dcaa5' },
+    { dragThreshold: 5,  fr: 1, name: 'Established slime',    detail: 'Diatoms and micro-algae. +8–15% drag.', dot: '#ef9f27' },
+    { dragThreshold: 12, fr: 2, name: 'Early macrofouling',   detail: 'Barnacle larvae and filamentous algae. +20–30%.', dot: '#f0997b' },
+    { dragThreshold: 22, fr: 3, name: 'Barnacle settlement',  detail: 'Established macrofouling. Cleaning mandatory. +40–60%.', dot: '#e24b4a' },
+    { dragThreshold: 40, fr: 4, name: 'Dense macrofouling',   detail: 'Mussels, tube worms. Drydock recommended. +60–80%.', dot: '#a32d2d' },
   ];
 
   return stages.map(s => {
@@ -429,8 +429,8 @@ function buildChart(days, temp, sal, af) {
       maintainAspectRatio: false,
       plugins: { legend: { display: false }, tooltip: {
         callbacks: {
-          title: items => 'J' + items[0].parsed.x,
-          label: ctx => ' +' + ctx.parsed.y.toFixed(1) + '% resistance'
+          title: items => 'Day ' + items[0].parsed.x,
+          label: ctx => ' +' + ctx.parsed.y.toFixed(1) + '% drag increase'
         }
       }},
       scales: {
@@ -439,13 +439,13 @@ function buildChart(days, temp, sal, af) {
           min: 0,
           max: days,
           grid: { color: gridColor },
-          ticks: { color: textColor, font: { size: 11 }, maxRotation: 0, maxTicksLimit: 9, callback: v => 'J' + v }
+          ticks: { color: textColor, font: { size: 11 }, maxRotation: 0, maxTicksLimit: 9, callback: v => 'D' + v }
         },
         y: {
           min: 0,
           grid: { color: gridColor },
           ticks: { color: textColor, font: { size: 11 }, callback: v => '+' + v + '%' },
-          title: { display: true, text: 'Resistance supplementaire', color: textColor, font: { size: 11 } }
+          title: { display: true, text: 'Additional drag', color: textColor, font: { size: 11 } }
         }
       }
     }
@@ -465,10 +465,10 @@ function buildTimeline(events) {
       ? 'background: rgba(29,158,117,0.08); border-radius: 6px; margin: 0 -8px; padding: 10px 8px; border-bottom: none; border-left: 2px solid #1d9e75;'
       : '';
     row.innerHTML = `
-      <div class="tl-day" style="${isCurrent ? 'color:var(--text);font-weight:500;' : ''}">J${ev.day}</div>
+      <div class="tl-day" style="${isCurrent ? 'color:var(--text);font-weight:500;' : ''}">D${ev.day}</div>
       <div class="tl-dot" style="background:${ev.dot}; ${isCurrent ? 'width:8px;height:8px;margin-top:4px;' : ''}"></div>
       <div class="tl-content">
-        <div class="tl-name" style="${isCurrent ? 'color:var(--teal);' : ''}">${isCurrent ? '&#8594; ' : ''}${ev.name}${isCurrent ? ' <span style="font-size:11px;font-weight:400;color:var(--teal);opacity:0.8;">(stade actuel)</span>' : ''}</div>
+        <div class="tl-name" style="${isCurrent ? 'color:var(--teal);' : ''}">${isCurrent ? '&#8594; ' : ''}${ev.name}${isCurrent ? ' <span style="font-size:11px;font-weight:400;color:var(--teal);opacity:0.8;">(current stage)</span>' : ''}</div>
         <div class="tl-detail">${ev.detail}</div>
       </div>`;
     tl.appendChild(row);
@@ -476,29 +476,29 @@ function buildTimeline(events) {
 }
 
 function tempLabel(t) {
-  if (t < 15) return 'Eaux froides (Atlantique Nord, Baltique)';
-  if (t < 20) return 'Eaux tempérées';
-  if (t < 25) return 'Eaux chaudes (Méditerranée, été)';
-  if (t < 30) return 'Eaux tropicales — taux de croissance ×2 vs 15°C';
-  if (t < 34) return 'Golfe Persique / Mer Rouge — taux maximal';
-  return 'Eaux extrêmement chaudes (zones côtières peu profondes)';
+  if (t < 15) return 'Cold waters (North Atlantic, Baltic)';
+  if (t < 20) return 'Temperate waters';
+  if (t < 25) return 'Warm waters (Mediterranean, summer)';
+  if (t < 30) return 'Tropical waters — growth rate ×2 vs 15°C';
+  if (t < 34) return 'Persian Gulf / Red Sea — maximum rate';
+  return 'Extremely warm waters (shallow coastal areas)';
 }
 
 function salLabel(s) {
-  if (s < 20) return 'Eaux saumâtres (estuaires, Baltique)';
-  if (s < 33) return 'Océan Atlantique — sous la moyenne';
-  if (s < 36) return 'Océan mondial moyen — 35‰';
-  if (s < 39) return 'Golfe Persique / Détroit d\'Ormuz — élevé';
-  return 'Mer Rouge / eaux hypersalines';
+  if (s < 20) return 'Brackish waters (estuaries, Baltic)';
+  if (s < 33) return 'Atlantic Ocean — below average';
+  if (s < 36) return 'World ocean average — 35‰';
+  if (s < 39) return 'Persian Gulf / Strait of Hormuz — high';
+  return 'Red Sea / hypersaline waters';
 }
 
 function afLabel(af) {
-  if (af === 0) return 'Antifouling épuisé ou absent';
-  if (af < 25) return 'Revêtement très dégradé (5+ ans)';
-  if (af < 50) return 'Efficacité partielle (3–4 ans)';
-  if (af < 75) return 'Revêtement actif (1–2 ans)';
-  if (af < 95) return 'Revêtement récent (6–12 mois)';
-  return 'Antifouling neuf (< 6 mois)';
+  if (af === 0) return 'Exhausted or absent antifouling';
+  if (af < 25) return 'Heavily degraded coating (5+ years)';
+  if (af < 50) return 'Partial efficiency (3–4 years)';
+  if (af < 75) return 'Active coating (1–2 years)';
+  if (af < 95) return 'Recent coating (6–12 months)';
+  return 'New antifouling (< 6 months)';
 }
 
 function update() {
@@ -507,7 +507,7 @@ function update() {
   const sal  = parseFloat(slSal.value);
   const af   = parseInt(slAf.value);
 
-  $('val-days').innerHTML = days + '<span class="slider-unit"> jours</span>';
+  $('val-days').innerHTML = days + '<span class="slider-unit"> days</span>';
   $('val-temp').innerHTML = temp.toFixed(1) + '<span class="slider-unit"> °C</span>';
   $('val-sal').innerHTML  = sal.toFixed(1) + '<span class="slider-unit"> ‰</span>';
   $('val-af').innerHTML   = af + '<span class="slider-unit"> %</span>';
