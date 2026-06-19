@@ -369,21 +369,33 @@ function dragToPower(drag) {
   return Math.round(drag * 0.65 * 10) / 10;
 }
 
-function getTimelineEvents(days, temp, sal, af) {
-  const tf = tempFactor(temp);
-  const sf = salFactor(sal);
-  const aff = afFactor(af);
-  const adjust = 1 / (tf * sf * aff);
+function dayForDrag(targetDrag, temp, sal, af) {
+  for (let d = 0; d <= 365; d++) {
+    if (computeDrag(d, temp, sal, af) >= targetDrag) return d;
+  }
+  return null;
+}
 
-  const events = [
-    { day: 0,                                   name: 'Film biochimique',        detail: 'Adsorption de protéines et polysaccharides. Irréversible dès H+2.', dot: '#1d9e75' },
-    { day: Math.round(2 * adjust),              name: 'Biofilm bactérien',       detail: 'Colonisation bactérienne. Slime jaunâtre naissant.', dot: '#5dcaa5' },
-    { day: Math.round(6 * adjust),              name: 'Slime établi',            detail: 'Diatomées et microalgues. +8–15% résistance.', dot: '#ef9f27' },
-    { day: Math.round(14 * adjust),             name: 'Macrofouling précoce',    detail: 'Larves de balanes et algues filamenteuses. +20–30%.', dot: '#f0997b' },
-    { day: Math.round(30 * adjust),             name: 'Balanes naissantes',      detail: 'Macrofouling établi. Nettoyage obligatoire. +40–60%.', dot: '#e24b4a' },
-    { day: Math.round(60 * adjust),             name: 'Macrofouling dense',      detail: 'Moules, vers tubicoles. Cale sèche recommandée. +60–80%.', dot: '#a32d2d' },
+function getTimelineEvents(days, temp, sal, af) {
+  const currentDrag = computeDrag(days, temp, sal, af);
+  const currentFR = dragToFR(currentDrag);
+
+  const stages = [
+    { dragThreshold: 0,  fr: 0, name: 'Film biochimique',     detail: 'Adsorption de proteines et polysaccharides. Irreversible des H+2.', dot: '#1d9e75' },
+    { dragThreshold: 1,  fr: 1, name: 'Biofilm bacterien',    detail: 'Colonisation bacterienne. Slime jaunatre naissant.', dot: '#5dcaa5' },
+    { dragThreshold: 5,  fr: 1, name: 'Slime etabli',         detail: 'Diatomees et microalgues. +8-15% resistance.', dot: '#ef9f27' },
+    { dragThreshold: 12, fr: 2, name: 'Macrofouling precoce', detail: 'Larves de balanes et algues filamenteuses. +20-30%.', dot: '#f0997b' },
+    { dragThreshold: 22, fr: 3, name: 'Balanes naissantes',   detail: 'Macrofouling etabli. Nettoyage obligatoire. +40-60%.', dot: '#e24b4a' },
+    { dragThreshold: 40, fr: 4, name: 'Macrofouling dense',   detail: 'Moules, vers tubicoles. Cale seche recommandee. +60-80%.', dot: '#a32d2d' },
   ];
-  return events.filter(e => e.day <= days + 5);
+
+  return stages.map(s => {
+    const d = s.dragThreshold === 0 ? 0 : dayForDrag(s.dragThreshold, temp, sal, af);
+    const reached = d !== null && d <= days;
+    const isCurrent = reached && dragToFR(computeDrag(d, temp, sal, af)) === currentFR &&
+      (stages.findIndex(x => x === s) === stages.map(x => x.fr).lastIndexOf(currentFR) || s.fr === currentFR);
+    return { ...s, day: d, reached, isCurrent: reached && s.fr === currentFR };
+  }).filter(e => e.day !== null && e.day <= days + 1);
 }
 
 function buildChart(days, temp, sal, af) {
@@ -443,14 +455,20 @@ function buildChart(days, temp, sal, af) {
 function buildTimeline(events) {
   const tl = $('timeline');
   tl.innerHTML = '';
+  const lastReached = events.filter(e => e.reached);
+  const currentStage = lastReached.length ? lastReached[lastReached.length - 1] : null;
   events.forEach(ev => {
+    const isCurrent = currentStage && ev.name === currentStage.name;
     const row = document.createElement('div');
     row.className = 'tl-row';
+    row.style.cssText = isCurrent
+      ? 'background: rgba(29,158,117,0.08); border-radius: 6px; margin: 0 -8px; padding: 10px 8px; border-bottom: none; border-left: 2px solid #1d9e75;'
+      : '';
     row.innerHTML = `
-      <div class="tl-day">J${ev.day}</div>
-      <div class="tl-dot" style="background:${ev.dot}"></div>
+      <div class="tl-day" style="${isCurrent ? 'color:var(--text);font-weight:500;' : ''}">J${ev.day}</div>
+      <div class="tl-dot" style="background:${ev.dot}; ${isCurrent ? 'width:8px;height:8px;margin-top:4px;' : ''}"></div>
       <div class="tl-content">
-        <div class="tl-name">${ev.name}</div>
+        <div class="tl-name" style="${isCurrent ? 'color:var(--teal);' : ''}">${isCurrent ? '&#8594; ' : ''}${ev.name}${isCurrent ? ' <span style="font-size:11px;font-weight:400;color:var(--teal);opacity:0.8;">(stade actuel)</span>' : ''}</div>
         <div class="tl-detail">${ev.detail}</div>
       </div>`;
     tl.appendChild(row);
