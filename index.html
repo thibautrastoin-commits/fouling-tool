@@ -378,24 +378,22 @@ function dayForDrag(targetDrag, temp, sal, af) {
 
 function getTimelineEvents(days, temp, sal, af) {
   const currentDrag = computeDrag(days, temp, sal, af);
-  const currentFR = dragToFR(currentDrag);
 
   const stages = [
-    { dragThreshold: 0,  fr: 0, name: 'Biochemical film',     detail: 'Protein and polysaccharide adsorption. Irreversible from H+2.', dot: '#1d9e75' },
-    { dragThreshold: 1,  fr: 1, name: 'Bacterial biofilm',    detail: 'Bacterial colonisation. Nascent yellowish slime.', dot: '#5dcaa5' },
-    { dragThreshold: 5,  fr: 1, name: 'Established slime',    detail: 'Diatoms and micro-algae. +8–15% drag.', dot: '#ef9f27' },
-    { dragThreshold: 12, fr: 2, name: 'Early macrofouling',   detail: 'Barnacle larvae and filamentous algae. +20–30%.', dot: '#f0997b' },
-    { dragThreshold: 22, fr: 3, name: 'Barnacle settlement',  detail: 'Established macrofouling. Cleaning mandatory. +40–60%.', dot: '#e24b4a' },
-    { dragThreshold: 40, fr: 4, name: 'Dense macrofouling',   detail: 'Mussels, tube worms. Drydock recommended. +60–80%.', dot: '#a32d2d' },
+    { dragMin: 0,  dragMax: 1,  name: 'Biochemical film',    detail: 'Protein and polysaccharide adsorption. Irreversible from H+2.', dot: '#1d9e75' },
+    { dragMin: 1,  dragMax: 5,  name: 'Bacterial biofilm',   detail: 'Bacterial colonisation. Nascent yellowish slime.', dot: '#5dcaa5' },
+    { dragMin: 5,  dragMax: 12, name: 'Established slime',   detail: 'Diatoms and micro-algae. +8–15% drag.', dot: '#ef9f27' },
+    { dragMin: 12, dragMax: 22, name: 'Early macrofouling',  detail: 'Barnacle larvae and filamentous algae. +20–30%.', dot: '#f0997b' },
+    { dragMin: 22, dragMax: 40, name: 'Barnacle settlement', detail: 'Established macrofouling. Cleaning mandatory. +40–60%.', dot: '#e24b4a' },
+    { dragMin: 40, dragMax: 90, name: 'Dense macrofouling',  detail: 'Mussels, tube worms. Drydock recommended. +60–80%.', dot: '#a32d2d' },
   ];
 
   return stages.map(s => {
-    const d = s.dragThreshold === 0 ? 0 : dayForDrag(s.dragThreshold, temp, sal, af);
-    const reached = d !== null && d <= days;
-    const isCurrent = reached && dragToFR(computeDrag(d, temp, sal, af)) === currentFR &&
-      (stages.findIndex(x => x === s) === stages.map(x => x.fr).lastIndexOf(currentFR) || s.fr === currentFR);
-    return { ...s, day: d, reached, isCurrent: reached && s.fr === currentFR };
-  }).filter(e => e.day !== null && e.day <= days + 1);
+    const dayReached = s.dragMin === 0 ? 0 : dayForDrag(s.dragMin, temp, sal, af);
+    const reached = dayReached !== null && dayReached <= days;
+    const isCurrent = currentDrag >= s.dragMin && currentDrag < s.dragMax;
+    return { ...s, day: dayReached, reached, isCurrent };
+  }).filter(e => e.reached);
 }
 
 function buildChart(days, temp, sal, af) {
@@ -455,20 +453,18 @@ function buildChart(days, temp, sal, af) {
 function buildTimeline(events) {
   const tl = $('timeline');
   tl.innerHTML = '';
-  const lastReached = events.filter(e => e.reached);
-  const currentStage = lastReached.length ? lastReached[lastReached.length - 1] : null;
   events.forEach(ev => {
-    const isCurrent = currentStage && ev.name === currentStage.name;
+    const c = ev.isCurrent;
     const row = document.createElement('div');
     row.className = 'tl-row';
-    row.style.cssText = isCurrent
+    row.style.cssText = c
       ? 'background: rgba(29,158,117,0.08); border-radius: 6px; margin: 0 -8px; padding: 10px 8px; border-bottom: none; border-left: 2px solid #1d9e75;'
       : '';
     row.innerHTML = `
-      <div class="tl-day" style="${isCurrent ? 'color:var(--text);font-weight:500;' : ''}">D${ev.day}</div>
-      <div class="tl-dot" style="background:${ev.dot}; ${isCurrent ? 'width:8px;height:8px;margin-top:4px;' : ''}"></div>
+      <div class="tl-day" style="${c ? 'color:var(--text);font-weight:500;' : ''}">D${ev.day}</div>
+      <div class="tl-dot" style="background:${ev.dot}; ${c ? 'width:8px;height:8px;margin-top:4px;' : ''}"></div>
       <div class="tl-content">
-        <div class="tl-name" style="${isCurrent ? 'color:var(--teal);' : ''}">${isCurrent ? '&#8594; ' : ''}${ev.name}${isCurrent ? ' <span style="font-size:11px;font-weight:400;color:var(--teal);opacity:0.8;">(current stage)</span>' : ''}</div>
+        <div class="tl-name" style="${c ? 'color:var(--teal);' : ''}">${c ? '&#8594; ' : ''}${ev.name}${c ? ' <span style="font-size:11px;font-weight:400;color:var(--teal);opacity:0.8;">(current stage)</span>' : ''}</div>
         <div class="tl-detail">${ev.detail}</div>
       </div>`;
     tl.appendChild(row);
