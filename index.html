@@ -380,12 +380,12 @@ function getTimelineEvents(days, temp, sal, af) {
   const currentDrag = computeDrag(days, temp, sal, af);
 
   const stages = [
-    { dragMin: 0,  dragMax: 1,  name: 'Biochemical film',    detail: 'Protein and polysaccharide adsorption. Irreversible from H+2.', dot: '#1d9e75' },
-    { dragMin: 1,  dragMax: 5,  name: 'Bacterial biofilm',   detail: 'Bacterial colonisation. Nascent yellowish slime.', dot: '#5dcaa5' },
-    { dragMin: 5,  dragMax: 12, name: 'Established slime',   detail: 'Diatoms and micro-algae. +8–15% drag.', dot: '#ef9f27' },
-    { dragMin: 12, dragMax: 22, name: 'Early macrofouling',  detail: 'Barnacle larvae and filamentous algae. +20–30%.', dot: '#f0997b' },
-    { dragMin: 22, dragMax: 40, name: 'Barnacle settlement', detail: 'Established macrofouling. Cleaning mandatory. +40–60%.', dot: '#e24b4a' },
-    { dragMin: 40, dragMax: 90, name: 'Dense macrofouling',  detail: 'Mussels, tube worms. Drydock recommended. +60–80%.', dot: '#a32d2d' },
+    { dragMin: 0,  dragMax: 3,  name: 'Biochemical film',    detail: 'Protein and polysaccharide adsorption. Irreversible from H+2.', dot: '#1d9e75' },
+    { dragMin: 3,  dragMax: 12, name: 'Light slime (FR1)',   detail: 'Bacterial colonisation. Nascent yellowish slime. +3–12% drag.', dot: '#5dcaa5' },
+    { dragMin: 12, dragMax: 22, name: 'Established slime (FR2)', detail: 'Dense biofilm, diatoms, micro-algae. Increased roughness. +12–22% drag.', dot: '#ef9f27' },
+    { dragMin: 22, dragMax: 40, name: 'Early macrofouling (FR3)', detail: 'Barnacle larvae and filamentous algae. +22–40% drag.', dot: '#f0997b' },
+    { dragMin: 40, dragMax: 65, name: 'Barnacle settlement (FR4)', detail: 'Established macrofouling. Cleaning mandatory. +40–65% drag.', dot: '#e24b4a' },
+    { dragMin: 65, dragMax: 90, name: 'Dense macrofouling (FR4+)', detail: 'Mussels, tube worms. Drydock recommended. +65–90% drag.', dot: '#a32d2d' },
   ];
 
   return stages.map(s => {
